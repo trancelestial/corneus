@@ -1,1 +1,2 @@
-# torch_template
+# Pneumonia classification of x-ray scans
+Kaggle competition playing
