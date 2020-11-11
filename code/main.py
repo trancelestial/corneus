@@ -26,20 +26,20 @@ if __name__ == '__main__':
 
     params = {
         'net': {
-            'size_in': ,
-            'size_out': ,
+            'size_in': ...,
+            'size_out': ...,
             'layers': [],
-            'n_data': ,
+            'n_data': ...,
             'device': 'cuda',
         },
         'trainer': {
             'loss_name': 'L2',
             'optimizer_name': 'adam',
-            'lr': ,
-            'n_epochs': ,
+            'lr': ...,
+            'n_epochs': ...,
             'lr_milestones': [],
-            'batch_size': ,
-            'log_every': ,
+            'batch_size': ...,
+            'log_every': ...,
             'debug': True
         }
     }
