@@ -3,7 +3,6 @@ from tqdm import tqdm
 import logging
 from utils.timer import Timer
 from utils.losses import L1, L2
-from datasets.basic import *
 from base.base_trainer import BaseTrainer
 
 import matplotlib.pyplot as plt
