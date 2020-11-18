@@ -8,14 +8,14 @@ from base.base_trainer import BaseTrainer
 import matplotlib.pyplot as plt
 
 class Trainer(BaseTrainer):
-    def __init__(self, optimizer_name='adam', lr=1e-4, n_epochs=1000, lr_milestones=[], batch_size=128, loss_name='L2', log_every=0, debug=False, device='cuda', **kwargs):
+    def __init__(self, optimizer_name='adam', lr=1e-4, n_epochs=10, lr_milestones=[], batch_size=128, loss_name='bce', log_every=0, debug=False, device='cuda', **kwargs):
         super().__init__(optimizer_name, lr, n_epochs, lr_milestones, batch_size, loss_name,
                         log_every, debug, device)
-        self.valid_losses = {'L1': L1, 'L2': L2}
+        self.valid_losses = {'bce': torch.nn.CrossEntropyLoss() , 'L1': L1, 'L2': L2}
         assert loss_name in self.valid_losses.keys()
         self.loss_fn = self.valid_losses[loss_name] 
 
-    def train(self, net, data, timestamp=''):
+    def train(self, net, train_data, val_data, timestamp=''):
         loss_plot = []
 
         net = net.to(self.device)
@@ -28,7 +28,7 @@ class Trainer(BaseTrainer):
         if self.log_every:
             logging.info(f'Optimization with loss: {self.loss_fn.__name__} successfully initialized.')
 
-        loss_args = {'y': []
+        loss_args = {'y': [],
                      'pred': []}
 
         loss_epoch = 0
