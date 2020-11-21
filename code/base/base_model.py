@@ -9,11 +9,12 @@ class BaseModel(object):
         self.trainer = None
 
     def train(self, train_data, val_data=None, loss_name='bce', optimizer_name='adam', lr=1e-4,
-              n_epochs=20, lr_milestones=[], batch_size=128, device='cuda', **kwargs):
+              n_epochs=20, lr_milestones=[], batch_size=128, tensor_board=False,
+              device='cuda', **kwargs):
         self.trainer = Trainer(loss_name, optimizer_name, lr, n_epochs, lr_milestones, batch_size,
             val_data is not None, device, **kwargs)
         
-        self.trainer.train(self.net, train_data, val_data)
+        self.trainer.train(self.net, train_data, val_data, tensor_board)
 
         print(f'Training finished!')
     

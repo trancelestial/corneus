@@ -3,6 +3,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from utils.timer import Timer
 from base.base_trainer import BaseTrainer
+from torch.utils.tensorboard import SummaryWriter
 
 class Trainer(BaseTrainer):
     def __init__(self, loss_name='bce', optimizer_name='adam', lr=1e-4, n_epochs=20, lr_milestones=[],
@@ -10,7 +11,7 @@ class Trainer(BaseTrainer):
         super().__init__(loss_name, optimizer_name, lr, n_epochs, lr_milestones, batch_size, device)
         self.validate = validate
 
-    def train(self, net, train_data, val_data):
+    def train(self, net, train_data, val_data, tensor_board=False):
         train_loss, train_acc = [], []
         loss_epoch, acc_epoch = 0., 0.
 
@@ -29,8 +30,10 @@ class Trainer(BaseTrainer):
             raise ValueError(f'Invalid optimizer name: {self.optimizer_name}!')
         
         scheduler = torch.optim.lr_scheduler.MultiStepLR(optim, milestones=self.lr_milestones, gamma=0.1)
-
         train_loader = DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
+
+        if tensor_board:
+            writer = SummaryWriter('../logs')
 
         net = net.to(self.device)
         with Timer():
@@ -70,10 +73,19 @@ class Trainer(BaseTrainer):
                 loss_epoch /= batch_no
                 acc_epoch /= batch_no
                 print(f'\n[TRAIN]Epoch {n_epoch} Loss: {loss_epoch} Acc: {acc_epoch}')
+                if tensor_board:
+                    writer.add_scalar('Loss/train', loss_epoch, n_epoch)
+                    writer.add_scalar('Acc/train', acc_epoch, n_epoch)
 
                 if self.validate:
                     val_loss_epoch, val_acc_epoch = self.evaluate(net, val_data, self.loss_name)
                     print(f'\n[VAL]Epoch {n_epoch} Loss: {val_loss_epoch} Acc: {val_acc_epoch}')
+                    if tensor_board:
+                        writer.add_scalar('Loss/val', val_loss_epoch, n_epoch)
+                        writer.add_scalar('Acc/val', val_acc_epoch, n_epoch)
+                print()
+        if tensor_board:
+            writer.close()
 
     def evaluate(self, net, data, loss_name):
         val_loss, val_acc = [], []
