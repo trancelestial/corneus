@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from base.base_net import BaseNet
 
-class SimpleConv(BaseNet):
+class SimpleConvNet(BaseNet):
     def __init__(self, size_in, size_out, activation='relu'):
         super().__init__(size_in, size_out)
         valid_activations = {'relu': F.relu, 'leaky': F.leaky_relu, 'tanh': F.tanh,
@@ -33,7 +33,7 @@ class SimpleConv(BaseNet):
 
         return x
 
-class AlexLike(BaseNet):
+class AlexLikeNet(BaseNet):
     def __init__(self, size_in, size_out):
         super().__init__(size_in, size_out)
         self.size_in = size_in

@@ -11,10 +11,8 @@ class Trainer(BaseTrainer):
         self.validate = validate
 
     def train(self, net, train_data, val_data):
-        train_loss, val_loss = [], []
-        train_acc, val_acc = [], []
-        loss_epoch, val_loss_epoch = 0., 0.
-        acc_epoch, val_acc_epoch = 0., 0.
+        train_loss, train_acc = [], []
+        loss_epoch, acc_epoch = 0., 0.
 
         if self.loss_name == 'bce':
             loss_fn = torch.nn.CrossEntropyLoss()
@@ -33,13 +31,10 @@ class Trainer(BaseTrainer):
         scheduler = torch.optim.lr_scheduler.MultiStepLR(optim, milestones=self.lr_milestones, gamma=0.1)
 
         train_loader = DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
-        if self.validate:
-            val_loader = DataLoader(val_data, batch_size=self.batch_size, shuffle=True)
 
         net = net.to(self.device)
         with Timer():
             net.train()
-            print(f'Optimization started!')
             for n_epoch in range(self.n_epochs):
                 loss_epoch = 0.
                 acc_epoch = 0.
@@ -48,7 +43,8 @@ class Trainer(BaseTrainer):
                 # n_batches = 0
                 
                 t = tqdm(train_loader)
-                for batch_no, (data_batch, label_batch) in enumerate(t):        
+                batch_no = 0
+                for (data_batch, label_batch) in t:        
                     optim.zero_grad()
                     d = data_batch.to(self.device)
                     l = label_batch.to(self.device)
@@ -70,31 +66,46 @@ class Trainer(BaseTrainer):
 
                     t.set_description(f'Epoch {n_epoch} Loss: {loss:.8f} Acc: {acc:.8f}')
                     t.refresh()
+                    batch_no += 1
                 loss_epoch /= batch_no
                 acc_epoch /= batch_no
                 print(f'\n[TRAIN]Epoch {n_epoch} Loss: {loss_epoch} Acc: {acc_epoch}')
 
                 if self.validate:
-                    net.eval()
-                    t = tqdm(val_loader)
-                    with torch.no_grad():
-                        for batch_no, (data_batch, label_batch) in enumerate(t):
-                            d = data_batch.to(self.device)
-                            l = label_batch.to(self.device)
-                            pred = net(d)
-                            loss = loss_fn(pred, l)
+                    val_loss_epoch, val_acc_epoch = self.evaluate(net, val_data, self.loss_name)
+                    print(f'\n[VAL]Epoch {n_epoch} Loss: {val_loss_epoch} Acc: {val_acc_epoch}')
 
-                            val_loss.append(loss.item())
-                            val_loss_epoch += loss.item()
+    def evaluate(self, net, data, loss_name):
+        val_loss, val_acc = [], []
+        val_loss_epoch, val_acc_epoch = 0., 0.
+        val_loader = DataLoader(data, batch_size=self.batch_size, shuffle=True)
 
-                            cl = pred.argmax(axis=-1)
-                            acc = (cl == l).float().mean()
-                            val_acc_epoch += acc
+        if loss_name == 'bce':
+            loss_fn = torch.nn.CrossEntropyLoss()
+        else:
+            raise ValueError(f'Invalid loss name: {self.loss_name}!')
 
-                            val_acc.append(acc)
+        net.eval()
+        t = tqdm(val_loader)
+        with torch.no_grad():
+            batch_no = 0
+            for (data_batch, label_batch) in t:
+                d = data_batch.to(self.device)
+                l = label_batch.to(self.device)
+                pred = net(d)
+                loss = loss_fn(pred, l)
 
-                            t.set_description(f'Validation Loss: {loss:.8f} Acc: {acc:.8f}')
-                            t.refresh()
-                        val_loss_epoch /= batch_no
-                        val_acc_epoch /= batch_no
-                        print(f'[VAL]Epoch {n_epoch} Loss: {val_loss_epoch} Acc: {val_acc_epoch}')
+                val_loss.append(loss.item())
+                val_loss_epoch += loss.item()
+
+                cl = pred.argmax(axis=-1)
+                acc = (cl == l).float().mean()
+                val_acc_epoch += acc
+
+                val_acc.append(acc)
+                t.refresh()
+                batch_no += 1
+            val_loss_epoch /= batch_no
+            val_acc_epoch /= batch_no
+        
+        return val_loss_epoch, val_acc_epoch
