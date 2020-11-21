@@ -1,7 +1,5 @@
 import torch
 import torch.nn.functional as F
-from models.fcNet import FcNet
-from trainers.basic import Trainer
 
 class FullyConnected(object):
     def __init__(self, size_in, size_out, layers=[], device='cuda', **kwargs):
