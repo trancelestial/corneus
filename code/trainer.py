@@ -48,12 +48,10 @@ class Trainer(BaseTrainer):
                 # n_batches = 0
                 
                 t = tqdm(train_loader)
-                for batch_no, (data_batch, label_batch) in enumerate(t):
-                    
+                for batch_no, (data_batch, label_batch) in enumerate(t):        
+                    optim.zero_grad()
                     d = data_batch.to(self.device)
                     l = label_batch.to(self.device)
-            
-                    optim.zero_grad()
                     pred = net(d)
                     loss = loss_fn(pred, l)
 
@@ -79,25 +77,24 @@ class Trainer(BaseTrainer):
                 if self.validate:
                     net.eval()
                     t = tqdm(val_loader)
-                    for batch_no, (data_batch, label_batch) in enumerate(t):
-                        d = data_batch.to(self.device)
+                    with torch.no_grad():
+                        for batch_no, (data_batch, label_batch) in enumerate(t):
+                            d = data_batch.to(self.device)
+                            l = label_batch.to(self.device)
+                            pred = net(d)
+                            loss = loss_fn(pred, l)
 
-                        l = label_batch.to(self.device)
-                        pred = net(d)
-                        
-                        loss = loss_fn(pred, l)
-                        val_loss.append(loss.item())
-                        val_loss_epoch += loss.item()
+                            val_loss.append(loss.item())
+                            val_loss_epoch += loss.item()
 
-                        cl = pred.argmax(axis=-1)
-                        acc = (cl == l).float().mean()
-                        val_acc_epoch += acc
+                            cl = pred.argmax(axis=-1)
+                            acc = (cl == l).float().mean()
+                            val_acc_epoch += acc
 
-                        val_acc.append(acc)
+                            val_acc.append(acc)
 
-                        t.set_description(f'Validation Loss: {loss:.8f} Acc: {acc:.8f}')
-                        t.refresh()
-                    net.train()
-                    val_loss_epoch /= batch_no
-                    val_acc_epoch /= batch_no
-                    print(f'[VAL]Epoch {n_epoch} Loss: {val_loss_epoch} Acc: {val_acc_epoch}')
+                            t.set_description(f'Validation Loss: {loss:.8f} Acc: {acc:.8f}')
+                            t.refresh()
+                        val_loss_epoch /= batch_no
+                        val_acc_epoch /= batch_no
+                        print(f'[VAL]Epoch {n_epoch} Loss: {val_loss_epoch} Acc: {val_acc_epoch}')
