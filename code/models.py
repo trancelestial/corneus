@@ -10,7 +10,7 @@ class SimpleConv(BaseModel):
         self.net = SimpleConvNet(size_in, size_out, activation, **kwargs)
 
 class AlexNetLike(BaseModel):
-    def __init__(self, size_in, size_out, activation='relu', device='cuda', **kwargs):
+    def __init__(self, size_in, size_out, device='cuda', **kwargs):
         super().__init__(device=device)
         self.net = AlexLikeNet(size_in, size_out, **kwargs)
 

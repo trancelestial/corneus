@@ -28,12 +28,11 @@ class BaseModel(object):
 
         print(f'\n[TEST] Loss: {test_loss} Acc: {test_acc}')
     
-
     def save_model(self, path):
         assert self.net is not None, 'First initialize/train your model!'
         torch.save(self.model.net.state_dict(), path)
         print(f'Model saved to {path}')
-
+    
     def load_model(self, path):
         assert self.net is not None, 'First initialize your model!'
         self.net.load_state_dict(torch.load(path))
