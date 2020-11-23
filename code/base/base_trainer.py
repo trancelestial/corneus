@@ -18,5 +18,5 @@ class BaseTrainer(ABC):
         pass
 
     @abstractclassmethod
-    def test(self, net, data, loss_name):
+    def evaluate(self, net, data, loss_name):
         pass

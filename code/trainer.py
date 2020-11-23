@@ -7,9 +7,10 @@ from torch.utils.tensorboard import SummaryWriter
 
 class Trainer(BaseTrainer):
     def __init__(self, loss_name='bce', optimizer_name='adam', lr=1e-4, n_epochs=20, lr_milestones=[],
-                 batch_size=128, validate=False, device='cuda', **kwargs):
+                 batch_size=128, validate=False, exp_name='experiment', device='cuda', **kwargs):
         super().__init__(loss_name, optimizer_name, lr, n_epochs, lr_milestones, batch_size, device)
         self.validate = validate
+        self.exp_name = exp_name
 
     def train(self, net, train_data, val_data, tensor_board=False):
         train_loss, train_acc = [], []
@@ -33,7 +34,7 @@ class Trainer(BaseTrainer):
         train_loader = DataLoader(train_data, batch_size=self.batch_size, shuffle=True)
 
         if tensor_board:
-            writer = SummaryWriter('../logs')
+            writer = SummaryWriter(f'../logs/{self.exp_name}')
 
         net = net.to(self.device)
         with Timer():
@@ -54,7 +55,7 @@ class Trainer(BaseTrainer):
                     pred = net(d)
                     loss = loss_fn(pred, l)
 
-                    train_loss.append(loss.item())
+                    # train_loss.append(loss.item())
                     loss_epoch += loss.item()
                     
                     loss.backward()
@@ -65,7 +66,10 @@ class Trainer(BaseTrainer):
                     acc = (cl == l).float().mean()
                     acc_epoch += acc
 
-                    train_acc.append(acc)
+                    # train_acc.append(acc)
+                    if tensor_board:
+                        writer.add_scalar('Loss/batch_train', loss, n_epoch*self.batch_size+batch_no)
+                        writer.add_scalar('Acc/batch_train', acc, n_epoch*self.batch_size+batch_no)
 
                     t.set_description(f'Epoch {n_epoch} Loss: {loss:.8f} Acc: {acc:.8f}')
                     t.refresh()
@@ -97,6 +101,7 @@ class Trainer(BaseTrainer):
         else:
             raise ValueError(f'Invalid loss name: {self.loss_name}!')
 
+        net.to(self.device)
         net.eval()
         t = tqdm(val_loader)
         with torch.no_grad():
@@ -107,14 +112,14 @@ class Trainer(BaseTrainer):
                 pred = net(d)
                 loss = loss_fn(pred, l)
 
-                val_loss.append(loss.item())
+                # val_loss.append(loss.item())
                 val_loss_epoch += loss.item()
 
                 cl = pred.argmax(axis=-1)
                 acc = (cl == l).float().mean()
                 val_acc_epoch += acc
 
-                val_acc.append(acc)
+                # val_acc.append(acc)
                 t.refresh()
                 batch_no += 1
             val_loss_epoch /= batch_no
